@@ -506,28 +506,28 @@ Player.prototype.play = function () {
   const session = this.session;
   const state = this.state;
 
-  this.speaker.initializeAudio();
+  Promise.resolve(this.speaker.initializeAudio()).then(() => {
+    if (!session.isTuned()) {
+      // not currently playing music
+      state.paused = false;
 
-  if (!session.isTuned()) {
-    // not currently playing music
+      return session.tune();
+    }
+
+    if (session.getActivePlay() && state.activePlay && state.paused) {
+      // resume playback of song
+      if (state.activePlay.playStarted) {
+        state.activePlay.sound.resume();
+      } else {
+        state.activePlay.sound.play();
+      }
+    }
+
+    // 'start' event from sound will definitely be asynchronous, so prevent repeated calls
     state.paused = false;
 
-    return session.tune();
-  }
-
-  if (session.getActivePlay() && state.activePlay && state.paused) {
-    // resume playback of song
-    if (state.activePlay.playStarted) {
-      state.activePlay.sound.resume();
-    } else {
-      state.activePlay.sound.play();
-    }
-  }
-
-  // 'start' event from sound will definitely be asynchronous, so prevent repeated calls
-  state.paused = false;
-
-  this.updateSimulcast();
+    this.updateSimulcast();
+  });
 };
 
 Player.prototype.pause = function () {
