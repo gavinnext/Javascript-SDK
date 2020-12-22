@@ -1,3 +1,5 @@
+import Events from './events';
+
 var Sound = function (speaker, options, id, url) {
   var obj = Object.assign(this, Events);
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-let enabled = false;
+let enabled = true;
 
 let log = function () {
   let args = [ ...arguments ];

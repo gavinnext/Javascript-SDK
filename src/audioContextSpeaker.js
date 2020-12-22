@@ -85,7 +85,10 @@ class AudioPlayer {
 
   pause() {
     this.paused = true;
-    return this.context?.suspend();
+    if (this.context) {
+      this.context.suspend();
+    }
+    // return this.context?.suspend();
   }
 }
 
@@ -458,14 +461,17 @@ Speaker.prototype = {
       return;
     }
 
-    var ranges = this.active.audio.buffered;
-    if (
-      ranges.length > 0 &&
-      ranges.end(ranges.length - 1) >= this.active.audio.duration
-    ) {
-      log("active song has loaded enough, to preparing", url);
-      return this._prepare(url, 0);
-    }
+    // var ranges = this.active.audio.buffered;
+    // if (
+    //   ranges.length > 0 &&
+    //   ranges.end(ranges.length - 1) >= this.active.audio.duration
+    // ) {
+    //   log("active song has loaded enough, to preparing", url);
+    //   return this._prepare(url, 0);
+    // }
+
+    log(`this._prepare ${url}`);
+    return this._prepare(url, 0);
 
     if (this.active.audio.src === SILENCE) {
       log("preparing over silence");
@@ -548,135 +554,31 @@ Speaker.prototype = {
     }
   },
 
+
+  _startSound: function(audioData, context) {
+    console.log('startSound');
+      const soundSource = context.createBufferSource();
+      context.decodeAudioData(audioData, function(buffer) {
+            soundSource.buffer = buffer;
+            soundSource.connect(context.destination);
+            soundSource.loop = true;
+            soundSource.start(0);
+          },
+  
+          function(e){ console.log("Error with decoding audio data" + e); 
+      });
+  },
+  
   /*
    * Kick off playback of the requested sound.
    */
 
   _playSound: function (sound) {
-    var speaker = this;
+    console.log("playsound " + sound.url);
 
-    if (!this.active || !this.active.audio) {
-      // eslint-disable-next-line
-      console.error(
-        "**** player.initializeAudio() *** not called before playback!"
-      );
-      return;
-    }
-
-    if (this.active.sound === sound) {
-      if (this.active.audio.paused) {
-        log(sound.id + " was paused, so resuming");
-
-        // resume playback
-        this.active.audio
-          .play()
-          .then(function () {
-            log("resumed playback");
-            sound.trigger("play");
-          })
-          .catch(function () {
-            log("error resuming playback");
-            speaker.active.sound = null;
-            sound.trigger("finish");
-          });
-
-        if (this.fading.sound) {
-          this.fading.audio
-            .play()
-            .then(function () {
-              log("resumed fading playback");
-            })
-            .catch(function () {
-              log("error resuming fading playback");
-              speaker.fading.sound = null;
-              speaker.fading.audio.src = SILENCE;
-            });
-        }
-      } else {
-        log(sound.id + " is already playing");
-      }
-    } else {
-      if (this.preparing.audio.src !== sound.url) {
-        // hopefully, by this time, any sound that was destroyed before its
-        // play() call completed has actually completed its play call. Otherwise
-        // this will trigger an exception in the play preparation.
-        this._prepare(sound.url, sound.startPosition);
-
-        /*
-                } else if (sound.startPosition && (this.preparing.audio.currentTime !== sound.startPosition)) {
-                  log('advancing prepared audio to', sound.startPosition / 1000);
-                  this.preparing.audio.currentTime = sound.startPosition / 1000;
-                  */
-      }
-
-      // swap prepared -> active
-      var active = this.active;
-      this.active = this.preparing;
-      this.preparing = active;
-
-      // don't throw sound object in active until playback starts (below)
-      this.active.sound = null;
-      this._setVolume(this.active, sound);
-
-      // notify clients that whatever was previously playing has finished
-      if (this.preparing.sound) {
-        this.preparing.audio.src = SILENCE;
-
-        var finishedSound = this.preparing.sound;
-        this.preparing.sound = null;
-        finishedSound.trigger("finish");
-      }
-
-      log(sound.id + " initiating play()");
-
-      var me = this.active;
-
-      this.active.audio
-        .play()
-        .then(function () {
-          if (!speaker.outstandingSounds[sound.id]) {
-            log(sound.id + " play() succeeded, but sound has been destroyed");
-
-            // this sound was killed before playback began - make sure to stop it
-            if (me.audio && me.audio.src === sound.url) {
-              log(sound.id + " being paused and unloaded");
-              me.audio.pause();
-              me.audio.src = SILENCE;
-            }
-
-            return;
-          }
-
-          log(sound.id + " play() succeeded");
-          me.sound = sound;
-
-          // configure fade-out now that metadata is loaded
-          if (sound.fadeOutSeconds && sound.fadeOutEnd === 0) {
-            sound.fadeOutStart = me.audio.duration - sound.fadeOutSeconds;
-            sound.fadeOutEnd = me.audio.duration;
-          }
-
-          if (sound.startPosition) {
-            log("updating start position");
-            me.audio.currentTime = sound.startPosition / 1000;
-            log("updated");
-          }
-
-          var paused = me.audio.paused;
-
-          sound.trigger("play");
-
-          if (me.pauseAfterPlay) {
-            me.audio.pause();
-          } else if (paused) {
-            sound.trigger("pause");
-          }
-        })
-        .catch(function (error) {
-          log("error starting playback with sound " + sound.id, error);
-          sound.trigger("finish", error);
-        });
-    }
+    console.log("audioContext=" + this.audioContext);
+    fetch(url).then((response) => response.arrayBuffer())
+		.then((arrayBuffer) => this._startSound(arrayBuffer, this.audioContext));
   },
 
   _destroySound: function (sound) {
