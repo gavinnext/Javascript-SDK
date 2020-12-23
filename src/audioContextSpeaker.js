@@ -406,7 +406,13 @@ Speaker.prototype = {
               soundSource.volume = DEFAULT_VOLUME;
 
               // Create a gain node.
+              if (!this.audioContext.createGain) {
+                this.audioContext.createGain = this.audioContext.createGainNode;
+              }
+
               var gainNode = this.audioContext.createGain();
+
+              console.log(gainNode);
               // Connect the source to the gain node.
               soundSource.connect(gainNode);
               // Connect the gain node to the destination.
@@ -478,7 +484,7 @@ Speaker.prototype = {
     }
 
     var currentTime = audioGroup.audio.currentTime;
-    var currentVolume = audioGroup.volume;
+    var currentVolume = audioGroup.gain?.gain?.value;
 
     var calculatedVolume = sound.gainAdjustedVolume(this.vol);
 
@@ -536,8 +542,10 @@ Speaker.prototype = {
     }
 
     // if (currentVolume !== calculatedVolume) {
-    audioGroup.gain.value = calculatedVolume;
+    audioGroup.gain.gain.value = calculatedVolume;
     audioGroup.volume = calculatedVolume;
+
+    console.log(audioGroup);
     // }
   },
 
