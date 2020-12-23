@@ -3,12 +3,12 @@
 let enabled = false;
 
 let log = function () {
-  let args = [ ...arguments ];
+  let args = [...arguments];
 
-  args[0] = 'feed.fm: ' + args[0];
-  
+  args[0] = "feed.fm: " + args[0];
+
   if (enabled) {
-    console.log.apply( console, args);
+    console.log.apply(console, args);
   }
 
   let historyEntry;
@@ -16,30 +16,30 @@ let log = function () {
     historyEntry = JSON.stringify({
       ts: new Date(),
       message: args[0],
-      args: args.slice(1)
+      args: args.slice(1),
     });
   } catch (e) {
     historyEntry = JSON.stringify({
       ts: new Date(),
       message: args[0],
-      args: 'truncated'
+      args: "truncated",
     });
   }
 
   log.history.push(historyEntry);
 
-  if (history.length > 500) {
+  if (log.history.length > 500) {
     log.history.shift();
   }
 };
 
 log.history = [];
 
-log.enable = function() {
+log.enable = function () {
   enabled = true;
 };
 
-log.reset = function() {
+log.reset = function () {
   let oldHistory = log.history;
 
   log.history = [];

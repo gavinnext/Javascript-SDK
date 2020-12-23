@@ -3,15 +3,15 @@
  * to the following api:
  *
  *    speaker.initializeAudio(): many clients can only start using
- *      audio when handling an 'onClick' event. This call should be made 
+ *      audio when handling an 'onClick' event. This call should be made
  *      at that time to get audio initialized while waiting for details
- *      of what to play from the server. 
+ *      of what to play from the server.
  *
  *    speaker.setVolume(value): set the volume from 0 (mute) - 100 (full volume)
  *
  *    var sound = speaker.create(url, optionsAndEvents): create a new sound from the
  *       given url and return a 'song' object that can be used to pause/play/
- *       destroy the song and receive trigger events as the song plays/stops. 
+ *       destroy the song and receive trigger events as the song plays/stops.
  *
  *       The 'optionsAndEvents' is an object that lets you specify event
  *       handlers and options:
@@ -19,7 +19,7 @@
  *          startPosition:  specifies the time offset (in milliseconds) that the
  *                          sound should begin playback at when we begin playback.
  *          endPosition:    specifies the time offset (in milliseconds) that the
- *                          sound should stop playback 
+ *                          sound should stop playback
  *          fadeInSeconds:  # of seconds to fade in audio
  *          fadeOutSeconds: # of seconds to fade out audio
  *          play:           event handler for 'play' event
@@ -48,25 +48,25 @@
  *         resume: resume playback
  *         destroy: stop playback, prevent any future playback, and free up memory
  *
- *   The speaker assumes that you'll be playing only one sound at a time. When 
+ *   The speaker assumes that you'll be playing only one sound at a time. When
  *   you kick off playback of a sound, it stops playback of any existing sound.
  *   Fade-outs are handled by reporting the audio as complete when the fade-out
  *   begins, but the sound continues playback until it has fully faded out. New
  *   audio can be started while the fadeout is happening.
  */
 
-import log from './log';
-import Events from './events';
-import { uniqueId } from './util';
+import log from "./log";
+import Events from "./events";
+import { uniqueId } from "./util";
 
 const DEFAULT_VOLUME = 1.0;
 
 const iOSp = /(iPhone|iPad)/i.test(navigator.userAgent);
 const brokenWebkit = iOSp && /OS 13_[543210]/i.test(navigator.userAgent);
 
-const SILENCE = iOSp ?
-  'https://u9e9h7z5.map2.ssl.hwcdn.net/feedfm-audio/250-milliseconds-of-silence.mp3' :
-  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+const SILENCE = iOSp
+  ? "https://u9e9h7z5.map2.ssl.hwcdn.net/feedfm-audio/250-milliseconds-of-silence.mp3"
+  : "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
 //const SILENCE = 'https://dgase5ckewowv.cloudfront.net/feedfm-audio/1573592316-88123.m4a';
 
@@ -87,7 +87,7 @@ var Sound = function (speaker, options, id, url) {
 
     this.fadeInSeconds = +options.fadeInSeconds;
     if (this.fadeInSeconds) {
-      this.fadeInStart = this.startPosition ? (this.startPosition / 1000) : 0;
+      this.fadeInStart = this.startPosition ? this.startPosition / 1000 : 0;
       this.fadeInEnd = this.fadeInStart + this.fadeInSeconds;
     } else {
       this.fadeInStart = 0;
@@ -97,7 +97,7 @@ var Sound = function (speaker, options, id, url) {
     this.fadeOutSeconds = +options.fadeOutSeconds;
     if (this.fadeOutSeconds) {
       if (this.endPosition) {
-        this.fadeOutStart = (this.endPosition / 1000) - this.fadeOutSeconds;
+        this.fadeOutStart = this.endPosition / 1000 - this.fadeOutSeconds;
         this.fadeOutEnd = this.endPosition / 1000;
       } else {
         this.fadeOutStart = 0;
@@ -105,41 +105,50 @@ var Sound = function (speaker, options, id, url) {
       }
     }
 
-    for (let ev of ['play', 'pause', 'finish', 'elapse']) {
+    for (let ev of ["play", "pause", "finish", "elapse"]) {
       if (ev in options) {
         obj.on(ev, options[ev]);
       }
     }
 
     this.gain = options.gain || 0;
-
   } else {
     this.gain = 0;
-
   }
 
   return obj;
 };
 
 function d(audio) {
-  return ' src = ' + audio.src + ', time = ' + audio.currentTime + ', paused = ' + audio.paused + ', duration = ' + audio.duration + ', readyState = ' + audio.readyState;
+  return (
+    " src = " +
+    audio.src +
+    ", time = " +
+    audio.currentTime +
+    ", paused = " +
+    audio.paused +
+    ", duration = " +
+    audio.duration +
+    ", readyState = " +
+    audio.readyState
+  );
 }
 
 Sound.prototype = {
   play: function () {
-    log('sound ' + this.id + ' play');
+    log("sound " + this.id + " play");
     return this.speaker._playSound(this);
   },
 
   // pause playback of the current sound clip
   pause: function () {
-    log('sound ' + this.id + ' pause');
+    log("sound " + this.id + " pause");
     return this.speaker._pauseSound(this);
   },
 
   // resume playback of the current sound clip
   resume: function () {
-    log('sound ' + this.id + ' resume');
+    log("sound " + this.id + " resume");
     return this.speaker._playSound(this);
   },
 
@@ -160,7 +169,7 @@ Sound.prototype = {
   // note that no further events will be sent from this sound
   // (so no 'finish' event, in particular)
   destroy: function () {
-    log('sound ' + this.id + ' destroy');
+    log("sound " + this.id + " destroy");
     this.speaker._destroySound(this);
   },
 
@@ -169,18 +178,24 @@ Sound.prototype = {
       return volume / 100;
     }
 
-    var adjusted = Math.max(Math.min((volume / 100) * (50 * Math.pow(10, this.gain / 20)), 100), 0) / 100;
+    var adjusted =
+      Math.max(
+        Math.min((volume / 100) * (50 * Math.pow(10, this.gain / 20)), 100),
+        0
+      ) / 100;
 
-    //log('gain adjustment is ' + this.gain + ', and final adjusted volume is ' + adjusted);
+    console.log(
+      "gain adjustment is " +
+        this.gain +
+        ", and final adjusted volume is " +
+        adjusted
+    );
 
     return adjusted;
-  }
-
+  },
 };
 
-let Speaker = function () {
-
-};
+let Speaker = function () {};
 
 // exports with this version of Javacript isn't working, so...
 Speaker.iOSp = iOSp;
@@ -216,7 +231,7 @@ function createAudioContext() {
 }
 
 Speaker.prototype = {
-  vol: 100,  // 0..100
+  vol: 100, // 0..100
   outstandingSounds: {}, // Sound instances that have not yet been destroyed
 
   audioContext: null, // for mobile safari volume adjustment
@@ -250,26 +265,27 @@ Speaker.prototype = {
     // On mobile devices, we need to kick off playback of a sound in
     // response to a user event. This does that.
     if (this.active === null) {
-      log('initializing for mobile');
+      log("initializing for mobile");
 
       this.audioContext = createAudioContext();
 
       this.active = this._createAudio(SILENCE);
       this.fading = this._createAudio(SILENCE);
-      this.preparing = this._createAudio(this.prepareWhenReady ? this.prepareWhenReady : SILENCE);
+      this.preparing = this._createAudio(
+        this.prepareWhenReady ? this.prepareWhenReady : SILENCE
+      );
 
       this.prepareWhenReady = null;
-
     } else {
-      log('mobile already initialized');
+      log("mobile already initialized");
     }
   },
 
   getSupportedFormats: function () {
-    if (document.createElement('audio').canPlayType('audio/aac')) {
-      return 'aac,mp3';
+    if (document.createElement("audio").canPlayType("audio/aac")) {
+      return "aac,mp3";
     } else {
-      return 'mp3';
+      return "mp3";
     }
   },
 
@@ -288,7 +304,7 @@ Speaker.prototype = {
     var DEFAULT_VOLUME = 1.0;
 
     var audio = new Audio(url);
-    audio.crossOrigin = 'anonymous';
+    audio.crossOrigin = "anonymous";
     audio.loop = false;
     audio.volume = DEFAULT_VOLUME;
 
@@ -304,14 +320,17 @@ Speaker.prototype = {
       audio: audio,
       sound: null,
       gain: gain,
-      volume: DEFAULT_VOLUME
+      volume: DEFAULT_VOLUME,
     };
   },
 
   _addEventListeners: function (audio) {
-    audio.addEventListener('pause', this._onAudioPauseEvent.bind(this));
-    audio.addEventListener('ended', this._onAudioEndedEvent.bind(this));
-    audio.addEventListener('timeupdate', this._onAudioTimeUpdateEvent.bind(this));
+    audio.addEventListener("pause", this._onAudioPauseEvent.bind(this));
+    audio.addEventListener("ended", this._onAudioEndedEvent.bind(this));
+    audio.addEventListener(
+      "timeupdate",
+      this._onAudioTimeUpdateEvent.bind(this)
+    );
     //this._debugAudioObject(audio);
   },
 
@@ -322,16 +341,16 @@ Speaker.prototype = {
       return;
     }
 
-    if ((audio !== this.active.audio) || (audio.currentTime === audio.duration)) {
+    if (audio !== this.active.audio || audio.currentTime === audio.duration) {
       return;
     }
 
-    if (!this.active.sound || (this.active.sound.url !== audio.src)) {
-      log('active audio pause, but no matching sound');
+    if (!this.active.sound || this.active.sound.url !== audio.src) {
+      log("active audio pause, but no matching sound");
       return;
     }
 
-    this.active.sound.trigger('pause');
+    this.active.sound.trigger("pause");
   },
 
   _onAudioEndedEvent: function (event) {
@@ -351,15 +370,15 @@ Speaker.prototype = {
       return;
     }
 
-    if (!this.active.sound || (this.active.sound.url !== audio.src)) {
-      log('active audio ended, but no matching sound', audio.src);
+    if (!this.active.sound || this.active.sound.url !== audio.src) {
+      log("active audio ended, but no matching sound", audio.src);
       return;
     }
 
-    log('active audio ended');
+    log("active audio ended");
     var sound = this.active.sound;
     this.active.sound = null;
-    sound.trigger('finish');
+    sound.trigger("finish");
   },
 
   _onAudioTimeUpdateEvent: function (event) {
@@ -369,11 +388,13 @@ Speaker.prototype = {
       return;
     }
 
-    if ((audio === this.fading.audio) && this.fading.sound) {
-      if (this.fading.sound.endPosition && (audio.currentTime >= (this.fading.sound.endPosition / 1000))) {
+    if (audio === this.fading.audio && this.fading.sound) {
+      if (
+        this.fading.sound.endPosition &&
+        audio.currentTime >= this.fading.sound.endPosition / 1000
+      ) {
         this.fading.sound = null;
         this.fading.audio.src = SILENCE;
-
       } else {
         this._setVolume(this.fading);
       }
@@ -391,11 +412,17 @@ Speaker.prototype = {
     }
 
     if (this.active.sound.url !== audio.src) {
-      log('active audio elapsed, but no matching sound, so ignoring', audio.src);
+      log(
+        "active audio elapsed, but no matching sound, so ignoring",
+        audio.src
+      );
       return;
     }
 
-    if (this.active.sound.endPosition && ((this.active.sound.endPosition / 1000) <= audio.currentTime)) {
+    if (
+      this.active.sound.endPosition &&
+      this.active.sound.endPosition / 1000 <= audio.currentTime
+    ) {
       // song reached end of play
       var sound = this.active.sound;
 
@@ -403,9 +430,11 @@ Speaker.prototype = {
 
       this.active.audio.src = SILENCE;
 
-      sound.trigger('finish');
-
-    } else if (this.active.sound.fadeOutEnd && (audio.currentTime >= this.active.sound.fadeOutStart)) {
+      sound.trigger("finish");
+    } else if (
+      this.active.sound.fadeOutEnd &&
+      audio.currentTime >= this.active.sound.fadeOutStart
+    ) {
       // song hit start of fade out
       this._setVolume(this.active);
 
@@ -417,51 +446,79 @@ Speaker.prototype = {
       this.active.sound = null; // not used any more
 
       // pretend the song finished
-      this.fading.sound.trigger('finish');
-
+      this.fading.sound.trigger("finish");
     } else {
       this._setVolume(this.active);
 
-      this.active.sound.trigger('elapse');
+      this.active.sound.trigger("elapse");
     }
 
     if (this.prepareWhenReady) {
-      // we've got something we want to load. check if we've loaded 
+      // we've got something we want to load. check if we've loaded
       // enough of the current song that we can start loading next song.
       this.prepare(this.prepareWhenReady);
     }
   },
 
   _setVolume: function (audioGroup, sound) {
-    if (!sound) { sound = audioGroup.sound; }
+    if (!sound) {
+      sound = audioGroup.sound;
+    }
 
     var currentTime = audioGroup.audio.currentTime;
     var currentVolume = audioGroup.volume;
 
     var calculatedVolume = sound.gainAdjustedVolume(this.vol);
 
-    if ((sound.fadeInStart !== sound.fadeInEnd) && (currentTime < sound.fadeInStart)) {
+    if (
+      sound.fadeInStart !== sound.fadeInEnd &&
+      currentTime < sound.fadeInStart
+    ) {
       calculatedVolume = 0;
 
-      log('pre-fade-in volume is 0');
-
-    } else if ((sound.fadeInStart !== sound.fadeInEnd) && (currentTime >= sound.fadeInStart) && (currentTime <= sound.fadeInEnd)) {
+      log("pre-fade-in volume is 0");
+    } else if (
+      sound.fadeInStart !== sound.fadeInEnd &&
+      currentTime >= sound.fadeInStart &&
+      currentTime <= sound.fadeInEnd
+    ) {
       // ramp up from 0 - 100%
-      calculatedVolume = (currentTime - sound.fadeInStart) / (sound.fadeInEnd - sound.fadeInStart) * calculatedVolume;
+      calculatedVolume =
+        ((currentTime - sound.fadeInStart) /
+          (sound.fadeInEnd - sound.fadeInStart)) *
+        calculatedVolume;
 
-      log('ramping ▲ volume', { currentTime: currentTime, currentVolume: currentVolume, calculatedVolume: calculatedVolume, sound: sound });
-
-    } else if ((sound.fadeOutStart !== sound.fadeOutEnd) && (currentTime > sound.fadeOutEnd)) {
+      log("ramping ▲ volume", {
+        currentTime: currentTime,
+        currentVolume: currentVolume,
+        calculatedVolume: calculatedVolume,
+        sound: sound,
+      });
+    } else if (
+      sound.fadeOutStart !== sound.fadeOutEnd &&
+      currentTime > sound.fadeOutEnd
+    ) {
       calculatedVolume = 0;
 
-      log('post-fade-out volume is 0');
-
-    } else if ((sound.fadeOutStart !== sound.fadeOutEnd) && (currentTime >= sound.fadeOutStart) && (currentTime <= sound.fadeOutEnd)) {
+      log("post-fade-out volume is 0");
+    } else if (
+      sound.fadeOutStart !== sound.fadeOutEnd &&
+      currentTime >= sound.fadeOutStart &&
+      currentTime <= sound.fadeOutEnd
+    ) {
       // ramp down from 100% to 0
-      calculatedVolume = (1 - (currentTime - sound.fadeOutStart) / (sound.fadeOutEnd - sound.fadeOutStart)) * calculatedVolume;
+      calculatedVolume =
+        (1 -
+          (currentTime - sound.fadeOutStart) /
+            (sound.fadeOutEnd - sound.fadeOutStart)) *
+        calculatedVolume;
 
-      log('ramping ▼ volume', { currentTime: currentTime, currentVolume: currentVolume, calculatedVolume: calculatedVolume, sound: sound });
-
+      log("ramping ▼ volume", {
+        currentTime: currentTime,
+        currentVolume: currentVolume,
+        calculatedVolume: calculatedVolume,
+        sound: sound,
+      });
     }
 
     if (currentVolume !== calculatedVolume) {
@@ -477,20 +534,44 @@ Speaker.prototype = {
   },
 
   _debugAudioObject: function (object) {
-    var events = ['abort', 'load', 'loadend', 'loadstart', 'loadeddata', 'loadedmetadata', 'canplay', 'canplaythrough', 'seeked', 'seeking', 'stalled', 'timeupdate', 'volumechange', 'waiting', 'durationchange', 'progress', 'emptied', 'ended', 'play', 'pause'];
+    var events = [
+      "abort",
+      "load",
+      "loadend",
+      "loadstart",
+      "loadeddata",
+      "loadedmetadata",
+      "canplay",
+      "canplaythrough",
+      "seeked",
+      "seeking",
+      "stalled",
+      "timeupdate",
+      "volumechange",
+      "waiting",
+      "durationchange",
+      "progress",
+      "emptied",
+      "ended",
+      "play",
+      "pause",
+    ];
     var speaker = this;
 
     for (var i = 0; i < events.length; i++) {
       object.addEventListener(events[i], function (event) {
         var audio = event.currentTarget;
-        var name = (audio === speaker.active.audio) ? 'active' :
-          (audio === speaker.preparing.audio) ? 'preparing' :
-            'fading';
+        var name =
+          audio === speaker.active.audio
+            ? "active"
+            : audio === speaker.preparing.audio
+            ? "preparing"
+            : "fading";
 
-        log(name + ': ' + event.type);
-        log('    active: ' + d(speaker.active.audio));
-        log('    preparing: ' + d(speaker.preparing.audio));
-        log('    fading: ' + d(speaker.fading.audio));
+        log(name + ": " + event.type);
+        log("    active: " + d(speaker.active.audio));
+        log("    preparing: " + d(speaker.preparing.audio));
+        log("    fading: " + d(speaker.fading.audio));
 
         if (audio.src === SILENCE) {
           return;
@@ -502,20 +583,19 @@ Speaker.prototype = {
   // Create and return new sound object. This throws the song into
   // the preparing audio instance.
   create: function (url, optionsAndCallbacks) {
-    var id = uniqueId('feed-play-');
+    var id = uniqueId("feed-play-");
     var sound = new Sound(this, optionsAndCallbacks, id, url);
 
-    log('created play ' + id + ' (' + url + ')', optionsAndCallbacks);
+    log("created play " + id + " (" + url + ")", optionsAndCallbacks);
 
     this.outstandingSounds[sound.id] = sound;
 
     // start loading sound, if we can
     if (!this.active || !this.active.audio) {
-      log('no audio prepared yet, so preparing when ready');
+      log("no audio prepared yet, so preparing when ready");
       this.prepareWhenReady = sound.url;
-
     } else if (this.preparing.audio.src === SILENCE) {
-      log('preparing sound now');
+      log("preparing sound now");
       this._prepare(sound.url, sound.startPosition);
     }
 
@@ -524,75 +604,82 @@ Speaker.prototype = {
 
   prepare: function (url) {
     if (!this.active || !this.active.audio) {
-      log('saving url to prepare for later', url);
+      log("saving url to prepare for later", url);
       this.prepareWhenReady = url;
       return;
     }
 
     var ranges = this.active.audio.buffered;
-    if ((ranges.length > 0) && (ranges.end(ranges.length - 1) >= this.active.audio.duration)) {
-      log('active song has loaded enough, to preparing', url);
+    if (
+      ranges.length > 0 &&
+      ranges.end(ranges.length - 1) >= this.active.audio.duration
+    ) {
+      log("active song has loaded enough, to preparing", url);
       return this._prepare(url, 0);
     }
 
     if (this.active.audio.url === SILENCE) {
-      log('preparing over silence');
+      log("preparing over silence");
       return this._prepare(url, 0);
     }
 
     // still loading primary audio - so hold off for now
-    log('nothing available to do active prepare');
+    log("nothing available to do active prepare");
     this.prepareWhenReady = url;
   },
 
   /* eslint-disable no-console */
-  logState: function(label) {
+  logState: function (label) {
     // local testing:
-    console.group('speaker: ' + (label || ''));
+    console.group("speaker: " + (label || ""));
 
     if (!this.active) {
-      console.group('active');
-      console.log('uninitialized');
+      console.group("active");
+      console.log("uninitialized");
       console.groupEnd();
 
-      console.group('preparing');
-      console.log('uninitialized');
+      console.group("preparing");
+      console.log("uninitialized");
       console.groupEnd();
 
-      console.group('fading');
-      console.log('uninitialized');
+      console.group("fading");
+      console.log("uninitialized");
       console.groupEnd();
-
     } else {
-      console.group('active');
+      console.group("active");
       console.log(`audio.src: ${this.active.audio.src}`);
       console.log(`audio.paused: ${this.active.audio.paused}`);
-      console.log(`sound: ${this.active.sound ? this.active.sound.id : 'NULL'}`);
+      console.log(
+        `sound: ${this.active.sound ? this.active.sound.id : "NULL"}`
+      );
       console.log(`volume: ${this.active.volume}`);
       console.groupEnd();
 
-      console.group('preparing');
+      console.group("preparing");
       console.log(`audio.src: ${this.preparing.audio.src}`);
       console.log(`audio.paused: ${this.preparing.audio.paused}`);
-      console.log(`sound: ${this.preparing.sound ? this.preparing.sound.id : 'NULL'}`);
+      console.log(
+        `sound: ${this.preparing.sound ? this.preparing.sound.id : "NULL"}`
+      );
       console.log(`volume: ${this.preparing.volume}`);
       console.groupEnd();
 
-      console.group('fading');
+      console.group("fading");
       console.log(`audio.src: ${this.fading.audio.src}`);
       console.log(`audio.paused: ${this.fading.audio.paused}`);
-      console.log(`sound: ${this.fading.sound ? this.fading.sound.id : 'NULL'}`);
+      console.log(
+        `sound: ${this.fading.sound ? this.fading.sound.id : "NULL"}`
+      );
       console.log(`volume: ${this.fading.volume}`);
       console.groupEnd();
     }
 
-    console.group('outstanding sounds');
+    console.group("outstanding sounds");
     for (let id in this.outstandingSounds) {
       let play = this.outstandingSounds[id];
-      console.log(play.id + ': ' + play.url);
+      console.log(play.id + ": " + play.url);
     }
     console.groupEnd();
-
 
     console.groupEnd();
   },
@@ -602,12 +689,12 @@ Speaker.prototype = {
     this.prepareWhenReady = null;
 
     if (this.preparing.audio.src !== url) {
-      log('preparing ' + url);
+      log("preparing " + url);
       this.preparing.audio.src = url;
     }
 
-    if (startPosition && (this.preparing.audio.currentTime !== startPosition)) {
-      log('advancing preparing audio to', startPosition / 1000);
+    if (startPosition && this.preparing.audio.currentTime !== startPosition) {
+      log("advancing preparing audio to", startPosition / 1000);
       this.preparing.audio.currentTime = startPosition / 1000;
     }
   },
@@ -621,45 +708,44 @@ Speaker.prototype = {
 
     if (!this.active || !this.active.audio) {
       // eslint-disable-next-line
-      console.error('**** player.initializeAudio() *** not called before playback!');
+      console.error(
+        "**** player.initializeAudio() *** not called before playback!"
+      );
       return;
     }
 
     if (this.active.sound === sound) {
       if (this.active.audio.paused) {
-        log(sound.id + ' was paused, so resuming');
+        log(sound.id + " was paused, so resuming");
 
         // resume playback
-        this.active.audio.play()
+        this.active.audio
+          .play()
           .then(function () {
-            log('resumed playback');
-            sound.trigger('play');
-
+            log("resumed playback");
+            sound.trigger("play");
           })
           .catch(function () {
-            log('error resuming playback');
+            log("error resuming playback");
             speaker.active.sound = null;
-            sound.trigger('finish');
+            sound.trigger("finish");
           });
 
         if (this.fading.sound) {
-          this.fading.audio.play()
+          this.fading.audio
+            .play()
             .then(function () {
-              log('resumed fading playback');
-
+              log("resumed fading playback");
             })
             .catch(function () {
-              log('error resuming fading playback');
+              log("error resuming fading playback");
               speaker.fading.sound = null;
               speaker.fading.audio.src = SILENCE;
             });
-
         }
-
       } else {
-        log(sound.id + ' is already playing');
+        log(sound.id + " is already playing");
       }
-
     } else {
       if (this.preparing.audio.src !== sound.url) {
         // hopefully, by this time, any sound that was destroyed before its
@@ -689,21 +775,22 @@ Speaker.prototype = {
 
         var finishedSound = this.preparing.sound;
         this.preparing.sound = null;
-        finishedSound.trigger('finish');
+        finishedSound.trigger("finish");
       }
 
-      log(sound.id + ' initiating play()');
+      log(sound.id + " initiating play()");
 
       var me = this.active;
 
-      this.active.audio.play()
+      this.active.audio
+        .play()
         .then(function () {
           if (!speaker.outstandingSounds[sound.id]) {
-            log(sound.id + ' play() succeeded, but sound has been destroyed');
+            log(sound.id + " play() succeeded, but sound has been destroyed");
 
             // this sound was killed before playback began - make sure to stop it
-            if (me.audio && (me.audio.src === sound.url)) {
-              log(sound.id + ' being paused and unloaded');
+            if (me.audio && me.audio.src === sound.url) {
+              log(sound.id + " being paused and unloaded");
               me.audio.pause();
               me.audio.src = SILENCE;
             }
@@ -711,36 +798,34 @@ Speaker.prototype = {
             return;
           }
 
-          log(sound.id + ' play() succeeded');
+          log(sound.id + " play() succeeded");
           me.sound = sound;
 
           // configure fade-out now that metadata is loaded
-          if (sound.fadeOutSeconds && (sound.fadeOutEnd === 0)) {
+          if (sound.fadeOutSeconds && sound.fadeOutEnd === 0) {
             sound.fadeOutStart = me.audio.duration - sound.fadeOutSeconds;
             sound.fadeOutEnd = me.audio.duration;
           }
 
           if (sound.startPosition) {
-            log('updating start position');
+            log("updating start position");
             me.audio.currentTime = sound.startPosition / 1000;
-            log('updated');
+            log("updated");
           }
 
           var paused = me.audio.paused;
 
-          sound.trigger('play');
+          sound.trigger("play");
 
           if (me.pauseAfterPlay) {
             me.audio.pause();
-
           } else if (paused) {
-            sound.trigger('pause');
+            sound.trigger("pause");
           }
-
         })
         .catch(function (error) {
-          log('error starting playback with sound ' + sound.id, error);
-          sound.trigger('finish', error);
+          log("error starting playback with sound " + sound.id, error);
+          sound.trigger("finish", error);
         });
     }
   },
@@ -748,17 +833,16 @@ Speaker.prototype = {
   _destroySound: function (sound) {
     sound.off();
 
-    if (this.active && (this.active.sound === sound)) {
-      log('destroy triggered for current sound', sound.id);
+    if (this.active && this.active.sound === sound) {
+      log("destroy triggered for current sound", sound.id);
       this.active.audio.pause();
-
     } else {
-      log('destroy triggered for inactive sound', sound.id);
+      log("destroy triggered for inactive sound", sound.id);
 
       // if (this.active && (this.active.audio.src === sound.url)) {
       //   We're destroying the active sound, but it hasn't completed its play()
       //   yet (indicated by this.active.sound === sound), so we can't pause it
-      //   here. When the play does complete, it will notice it isn't in the 
+      //   here. When the play does complete, it will notice it isn't in the
       //   outstandingSounds map and it will pause itself
       // }
     }
@@ -766,7 +850,7 @@ Speaker.prototype = {
     delete this.outstandingSounds[sound.id];
   },
 
-  flush: function() {
+  flush: function () {
     // destroy all outstanding sound objects
     for (let id in this.outstandingSounds) {
       this.outstandingSounds[id].destroy();
@@ -774,7 +858,7 @@ Speaker.prototype = {
   },
 
   _pauseSound: function (sound) {
-    if (this.active && (sound.url === this.active.audio.src)) {
+    if (this.active && sound.url === this.active.audio.src) {
       if (this.active.sound === sound) {
         this.active.audio.pause();
       } else {
@@ -791,52 +875,51 @@ Speaker.prototype = {
   },
 
   _position: function (sound) {
-    if (this.active && (sound === this.active.sound)) {
+    if (this.active && sound === this.active.sound) {
       if (sound.url !== this.active.audio.src) {
-        log('trying to get current song position, but it is not in the active audio player');
+        log(
+          "trying to get current song position, but it is not in the active audio player"
+        );
       }
 
       return Math.floor(this.active.audio.currentTime * 1000);
-
     } else {
       return 0;
-
     }
   },
 
   _duration: function (sound) {
     if (sound === this.active.sound) {
       if (sound.url !== this.active.audio.src) {
-        log('trying to get current song duration, but it is not in the active audio player');
+        log(
+          "trying to get current song duration, but it is not in the active audio player"
+        );
       }
       var d = this.active.audio.duration;
       return isNaN(d) ? 0 : Math.floor(d * 1000);
-
     } else {
       return 0;
-
     }
   },
 
   // set the volume (0-100)
   setVolume: function (value) {
-    if (typeof value !== 'undefined') {
+    if (typeof value !== "undefined") {
       this.vol = value;
 
       if (this.active && this.active.sound) {
         this._setVolume(this.active);
       }
 
-      this.trigger('volume', value);
+      this.trigger("volume", value);
     }
 
     return this.vol;
   },
 
-  getVolume: function() {
+  getVolume: function () {
     return this.vol;
-  }
-
+  },
 };
 
 // add events to speaker class
