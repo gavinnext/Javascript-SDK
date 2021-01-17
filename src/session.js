@@ -769,11 +769,7 @@ Session.prototype._receiveNextPlay = function (ajax, response) {
     this.config.pendingRequest = null;
 
     if (response.success) {
-      console.log("ARE WE HERE BRUH", response.play.audio_file.url);
-
       this.trigger("prepare-sound", response.play.audio_file.url);
-
-      console.log("ARE WE HERE BRUH THO", response.play.audio_file.url);
 
       if (this.config.current) {
         console.log(

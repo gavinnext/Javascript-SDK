@@ -507,9 +507,6 @@ Player.prototype.play = function () {
   const state = this.state;
 
   Promise.resolve(this.speaker.initializeAudio()).then(() => {
-    console.log(session.isTuned());
-    console.log(state.paused, state.activePlay, session.getActivePlay());
-
     if (!session.isTuned()) {
       // not currently playing music
       state.paused = false;

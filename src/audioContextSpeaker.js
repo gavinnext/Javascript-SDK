@@ -940,10 +940,6 @@ Speaker.prototype = {
 
   flush: function () {
     // destroy all outstanding sound objects
-
-    console.log("FLUSHING THINGS");
-
-    console.log(this.outstandingSounds);
     for (let id in this.outstandingSounds) {
       this.outstandingSounds[id].destroy();
     }

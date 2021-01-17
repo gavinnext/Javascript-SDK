@@ -1,5 +1,5 @@
 {
-  "name": "feed-media-audio-player",
+  "name": "@samsungnext/feed-media-audio-player",
   "description": "Streaming audio client library for use in conjunction with Feed.fm",
   "homepage": "https://feed.fm/",
   "author": {
