@@ -98,7 +98,7 @@ class AudioPlayer {
   pause() {
     this.paused = true;
     clearInterval(this.interval);
-    return this.context?.suspend();
+    return this.context && this.context.suspend();
   }
 }
 
@@ -377,7 +377,7 @@ Speaker.prototype = {
     });
 
     this.audioContext.onstatechange = () => {
-      const currentState = this.audioContext?.state;
+      const currentState = this.audioContext && this.audioContext.state;
       console.log("Audo State Changing", currentState);
       if (currentState && currentState === "suspended") {
         audioPlayer.trigger("pause");
@@ -478,7 +478,7 @@ Speaker.prototype = {
     }
 
     var currentTime = audioGroup.audio.currentTime;
-    var currentVolume = audioGroup.gain?.gain?.value;
+    var currentVolume = audioGroup.gain && audioGroup.gain.gavin && audioGroup.gain.gain.value;
 
     var calculatedVolume = sound.gainAdjustedVolume(this.vol);
 
