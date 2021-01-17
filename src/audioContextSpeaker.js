@@ -300,8 +300,6 @@ Speaker.prototype = {
     audioPlayer.on("ontimeupdate", () => {
       console.log("ontimeupdate");
 
-      console.log(audioPlayer?.currentTime, audioPlayer?.duration);
-
       if (audioPlayer.src === SILENCE) {
         return;
       }
@@ -412,7 +410,6 @@ Speaker.prototype = {
 
               var gainNode = this.audioContext.createGain();
 
-              console.log(gainNode);
               // Connect the source to the gain node.
               soundSource.connect(gainNode);
               // Connect the gain node to the destination.
@@ -459,8 +456,6 @@ Speaker.prototype = {
           this.audioContext
         ),
       ]).then(([active, fading, preparing]) => {
-        console.log(active, fading, preparing);
-
         this.active = active;
         this.fading = fading;
         this.preparing = preparing;
@@ -478,7 +473,6 @@ Speaker.prototype = {
   },
 
   _setVolume: function (audioGroup, sound) {
-    console.log("SETTING VOLUME");
     if (!sound) {
       sound = audioGroup.sound;
     }
@@ -487,8 +481,6 @@ Speaker.prototype = {
     var currentVolume = audioGroup.gain?.gain?.value;
 
     var calculatedVolume = sound.gainAdjustedVolume(this.vol);
-
-    console.log(currentVolume, calculatedVolume);
 
     if (
       sound.fadeInStart !== sound.fadeInEnd &&
@@ -545,7 +537,6 @@ Speaker.prototype = {
     audioGroup.gain.gain.value = calculatedVolume;
     audioGroup.volume = calculatedVolume;
 
-    console.log(audioGroup);
     // }
   },
 
@@ -767,8 +758,6 @@ Speaker.prototype = {
         console.log(sound.id + " is already playing");
       }
     } else {
-      console.log("YOOO", this.preparing.audio.src, sound.url);
-
       const assemblePlay = () => {
         // swap prepared -> active
         var active = this.active;
