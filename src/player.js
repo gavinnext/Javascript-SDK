@@ -339,7 +339,7 @@ Player.prototype._onSoundPause = function (playId) {
 
 Player.prototype._onSoundFinish = function (playId, withError) {
   if (!this.state.activePlay || this.state.activePlay.id !== playId) {
-    log(
+    console.log(
       "received sound finish, but active play does not match",
       this.state.activePlay,
       playId
@@ -386,7 +386,7 @@ Player.prototype._onSoundFinish = function (playId, withError) {
 
 Player.prototype._onSoundElapse = function (playId) {
   if (!this.state.activePlay || this.state.activePlay.id !== playId) {
-    log(
+    console.log(
       "received sound elapse, but active play does not match",
       this.state.activePlay,
       playId
@@ -450,7 +450,7 @@ Player.prototype._onPlayStarted = function (play) {
 
 Player.prototype._onPlayCompleted = function (play) {
   if (!this.state.activePlay || this.state.activePlay.id !== play.id) {
-    log(
+    console.log(
       "received play completed, but it does not match active play",
       play,
       this.state.activePlay

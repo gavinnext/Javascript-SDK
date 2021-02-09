@@ -387,7 +387,9 @@ Session.prototype.reportPlayCompleted = function () {
 
 Session.prototype._receivePlayCompleted = function () {
   if (!this.config.pendingRequest) {
-    log("song finished, and no outstanding request, so playing pendingPlay");
+    console.log(
+      "song finished, and no outstanding request, so playing pendingPlay"
+    );
     // if we're not waiting for an incoming request, then we must
     // have the next play queued up, so play it:
     var pendingPlay = this.config.pendingPlay;
@@ -543,17 +545,17 @@ Session.prototype._receiveSkip = function (play, response) {
   }
 
   if (this.config.pendingPlay) {
-    log("skipping to song already queued up");
+    console.log("skipping to song already queued up");
     // skip to play already queued up
     var pendingPlay = this.config.pendingPlay;
     this.config.pendingPlay = null;
     this._assignCurrentPlay(pendingPlay);
   } else if (this.config.pendingRequest) {
-    log("skipping to what is queued up");
+    console.log("skipping to what is queued up");
     // we're waiting for a request - so just wait for that to show up
     this._assignCurrentPlay(null, true);
   } else {
-    log("skipping to what is queued up");
+    console.log("skipping to what is queued up");
     // nothing queued up and nothing being requested - we're outta music!
     this._assignCurrentPlay(null);
   }
