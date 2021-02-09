@@ -649,12 +649,7 @@ Session.prototype._assignCurrentPlay = function (play, waitingIfEmpty) {
     var currentPlay = this.config.current.play;
     this.config.current = null;
 
-    console.log("Triggerinng play completed");
-    try {
-      this.trigger("play-completed", currentPlay);
-    } catch (e) {
-      throw e;
-    }
+    this.trigger("play-completed", currentPlay);
   }
 
   if (play === null) {
