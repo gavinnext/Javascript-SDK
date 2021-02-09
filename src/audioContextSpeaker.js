@@ -81,7 +81,6 @@ class AudioPlayer {
   }
 
   play() {
-    console.log("pressing play");
     this.paused = false;
 
     if (this.context.state === "suspended") {
@@ -298,8 +297,6 @@ Speaker.prototype = {
     });
 
     audioPlayer.on("ontimeupdate", () => {
-      console.log("ontimeupdate");
-
       if (audioPlayer.src === SILENCE) {
         return;
       }
@@ -328,7 +325,7 @@ Speaker.prototype = {
       }
 
       if (this.active.sound.url !== audioPlayer.src) {
-        log(
+        console.log(
           "active audio elapsed, but no matching sound, so ignoring",
           audioPlayer.src
         );
@@ -363,6 +360,16 @@ Speaker.prototype = {
 
         // pretend the song finished
         this.fading.sound.trigger("finish");
+      } else if (this.active.audio.currentTime > audioPlayer.duration) {
+        console.log("ending play");
+        // song reached end of play
+        var sound = this.active.sound;
+
+        this.active.sound = null;
+
+        this.active.audio.src = SILENCE;
+
+        sound.trigger("finish");
       } else {
         this._setVolume(this.active);
 
@@ -398,7 +405,7 @@ Speaker.prototype = {
             audioData,
             (buffer) => {
               soundSource.buffer = buffer;
-              soundSource.loop = true;
+              soundSource.loop = false;
               soundSource.url = url;
               soundSource.sound = null;
               soundSource.volume = DEFAULT_VOLUME;
@@ -478,7 +485,8 @@ Speaker.prototype = {
     }
 
     var currentTime = audioGroup.audio.currentTime;
-    var currentVolume = audioGroup.gain && audioGroup.gain.gavin && audioGroup.gain.gain.value;
+    var currentVolume =
+      audioGroup.gain && audioGroup.gain.gavin && audioGroup.gain.gain.value;
 
     var calculatedVolume = sound.gainAdjustedVolume(this.vol);
 
@@ -599,10 +607,10 @@ Speaker.prototype = {
 
     // start loading sound, if we can
     if (!this.active || !this.active.audio) {
-      log("no audio prepared yet, so preparing when ready");
+      console.log("no audio prepared yet, so preparing when ready");
       this.prepareWhenReady = sound.url;
     } else if (this.preparing.audio.src === SILENCE) {
-      log("preparing sound now");
+      console.log("preparing sound now");
       this._prepare(sound.url, sound.startPosition);
     }
 
@@ -616,14 +624,12 @@ Speaker.prototype = {
       return;
     }
 
-    // var ranges = this.active.audio?.buffered;
-    // if (
-    //   ranges.length > 0 &&
-    //   ranges.end(ranges.length - 1) >= this.active.audio.duration
-    // ) {
-    //   console.log("active song has loaded enough, to preparing", url);
-    //   return this._prepare(url, 0);
-    // }
+    var ranges = this.active.audio.buffer;
+
+    if (ranges.length > 0 && ranges.length >= this.active.audio.duration) {
+      console.log("active song has loaded enough, to preparing", url);
+      return this._prepare(url, 0);
+    }
 
     if (this.active.audio.src === SILENCE) {
       console.log("preparing over silence");
@@ -829,7 +835,6 @@ Speaker.prototype = {
       };
 
       if (this.preparing.audio.src !== sound.url) {
-        console.log("preparing");
         // hopefully, by this time, any sound that was destroyed before its
         // play() call completed has actually completed its play call. Otherwise
         // this will trigger an exception in the play preparation.
@@ -837,93 +842,17 @@ Speaker.prototype = {
           assemblePlay();
         });
         return;
-
-        /*
-                } else if (sound.startPosition && (this.preparing.audio.currentTime !== sound.startPosition)) {
-                  log('advancing prepared audio to', sound.startPosition / 1000);
-                  this.preparing.audio.currentTime = sound.startPosition / 1000;
-                  */
       }
 
       assemblePlay();
-
-      // // swap prepared -> active
-      // var active = this.active;
-      // this.active = this.preparing;
-      // this.preparing = active;
-
-      // // don't throw sound object in active until playback starts (below)
-      // this.active.sound = null;
-      // this._setVolume(this.active, sound);
-
-      // // notify clients that whatever was previously playing has finished
-      // if (this.preparing.sound) {
-      //   this.preparing.audio.src = SILENCE;
-
-      //   var finishedSound = this.preparing.sound;
-      //   this.preparing.sound = null;
-      //   finishedSound.trigger("finish");
-      // }
-
-      // console.log(sound.id + " initiating play()");
-
-      // var me = this.active;
-
-      // this.active.audio
-      //   .play()
-      //   .then(function () {
-      //     if (!speaker.outstandingSounds[sound.id]) {
-      //       log(sound.id + " play() succeeded, but sound has been destroyed");
-
-      //       // this sound was killed before playback began - make sure to stop it
-      //       if (me.audio && me.audio.src === sound.url) {
-      //         log(sound.id + " being paused and unloaded");
-      //         me.audio.pause();
-      //         me.audio.src = SILENCE;
-      //       }
-
-      //       return;
-      //     }
-
-      //     console.log(sound.id + " play() succeeded");
-      //     me.sound = sound;
-
-      //     // configure fade-out now that metadata is loaded
-      //     if (sound.fadeOutSeconds && sound.fadeOutEnd === 0) {
-      //       sound.fadeOutStart = me.audio.duration - sound.fadeOutSeconds;
-      //       sound.fadeOutEnd = me.audio.duration;
-      //     }
-
-      //     if (sound.startPosition) {
-      //       log("updating start position");
-      //       me.audio.currentTime = sound.startPosition / 1000;
-      //       log("updated");
-      //     }
-
-      //     var paused = me.audio.paused;
-
-      //     sound.trigger("play");
-
-      //     if (me.pauseAfterPlay) {
-      //       me.audio.pause();
-      //     } else if (paused) {
-      //       sound.trigger("pause");
-      //     }
-      //   })
-      //   .catch(function (error) {
-      //     log("error starting playback with sound " + sound.id, error);
-      //     sound.trigger("finish", error);
-      //   });
     }
   },
 
   _destroySound: function (sound) {
-    console.log("calling destroy sound");
     sound.off();
 
     if (this.active && this.active.sound === sound) {
       console.log("destroy triggered for current sound", sound.id);
-      this.active.audio.pause();
     } else {
       console.log("destroy triggered for inactive sound", sound.id);
 
@@ -934,6 +863,8 @@ Speaker.prototype = {
       //   outstandingSounds map and it will pause itself
       // }
     }
+
+    this.active.audio.pause();
 
     delete this.outstandingSounds[sound.id];
   },
@@ -946,7 +877,6 @@ Speaker.prototype = {
   },
 
   _pauseSound: function (sound) {
-    console.log("Pause Sound Called");
     if (this.active && sound.url === this.active.audio.src) {
       if (this.active.sound === sound) {
         this.active.audio.pause();
