@@ -180,8 +180,8 @@ var Player = function (token, secret, options) {
 };
 
 Player.prototype.initializeAudio = function () {
-  log("INTIALIZE AUDIO");
-  this.speaker.initializeAudio();
+  console.log("INTIALIZE AUDIO");
+  return this.speaker.initializeAudio();
 };
 
 Player.prototype._onPlacement = function (placement) {
@@ -324,7 +324,7 @@ Player.prototype.getActivePlacement = function () {
 Player.prototype._onSoundPause = function (playId) {
   // sound paused playback
   if (!this.state.activePlay || this.state.activePlay.id !== playId) {
-    log(
+    console.log(
       "received sound pause, but active play does not match",
       this.state.activePlay,
       playId
@@ -333,6 +333,8 @@ Player.prototype._onSoundPause = function (playId) {
   }
 
   this.state.paused = true;
+
+  console.log("triggering play paused");
 
   this.trigger("play-paused", this.session.getActivePlay());
 };
@@ -542,7 +544,8 @@ Player.prototype.pause = function () {
   }
 
   // pause current song
-  this.state.activePlay.sound.pause();
+  console.log("Calling pause on howl", this.state.activePlay.sound);
+  const paused = this.state.activePlay.sound.pause();
 
   // 'pause' event from sound might be asynchronous, so prevent repeated calls
   this.state.paused = true;
