@@ -1,105 +1,107 @@
-import resolve from '@rollup/plugin-node-resolve';
-import babel from 'rollup-plugin-babel';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import bundleSize from 'rollup-plugin-bundle-size';
-import visualizer from 'rollup-plugin-visualizer';
-import { terser } from 'rollup-plugin-terser';
+import resolve from "@rollup/plugin-node-resolve";
+import babel from "rollup-plugin-babel";
+import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
+import bundleSize from "rollup-plugin-bundle-size";
+import visualizer from "rollup-plugin-visualizer";
+import { terser } from "rollup-plugin-terser";
 
 export default [
   // production IIFE release
   {
-    input: 'src/index.js',
+    input: "src/index.js",
     output: {
-      file: 'dist/feed-media-audio-player.min.js',
-      format: 'iife',
-      name: 'Feed'
+      file: "dist/feed-media-audio-player.min.js",
+      format: "iife",
+      name: "Feed",
     },
     plugins: [
-      json({ // so we can get version
-        include: 'package.json',
+      json({
+        // so we can get version
+        include: "package.json",
         preferConst: false,
         compact: true,
-        namedExports: true
+        namedExports: true,
       }),
       resolve(),
       commonjs(),
       babel({
-        exclude: 'node_modules/**'
+        exclude: "node_modules/**",
+        runtimeHelpers: true,
       }),
       terser({
         output: {
-          ascii_only: true
-        }
+          ascii_only: true,
+        },
       }),
-      bundleSize()      
-    ]
+      bundleSize(),
+    ],
   },
   // production CJS release
   {
-    input: 'src/index.js',
+    input: "src/index.js",
     output: {
-      file: 'lib/index.js',
-      format: 'cjs',
+      file: "lib/index.js",
+      format: "cjs",
     },
-    external: [ 
-      'tiny-cookie'
-    ],
+    external: ["tiny-cookie"],
     plugins: [
-      json({ // so we can get version
-        include: 'package.json',
+      json({
+        // so we can get version
+        include: "package.json",
         preferConst: false,
         compact: true,
-        namedExports: true
+        namedExports: true,
       }),
       babel({
-        exclude: 'node_modules/**'
+        exclude: "node_modules/**",
       }),
-      bundleSize()
-    ]
+      bundleSize(),
+    ],
   },
   // internal development and testing
   {
-    input: 'src/index.js',
+    input: "src/index.js",
     output: {
-      file: 'build/feed.js',
-      format: 'iife',
-      name: 'Feed',
-      sourcemap: true
+      file: "build/feed.js",
+      format: "iife",
+      name: "Feed",
+      sourcemap: true,
     },
     plugins: [
-      json({ // so we can get version
-        include: 'package.json',
+      json({
+        // so we can get version
+        include: "package.json",
         preferConst: true,
-        indent: ' ',
+        indent: " ",
         compact: true,
-        namedExports: true
+        namedExports: true,
       }),
       resolve(),
       commonjs(),
       babel({
-        exclude: 'node_modules/**'
+        exclude: "node_modules/**",
       }),
       visualizer({
-        filename: 'build/statistics.html'
+        filename: "build/statistics.html",
       }),
-      bundleSize()
-    ]
+      bundleSize(),
+    ],
   },
   {
-    input: 'test/player.js',
+    input: "test/player.js",
     output: {
-      file: 'build/player.js',
-      format: 'iife',
-      sourcemap: true
+      file: "build/player.js",
+      format: "iife",
+      sourcemap: true,
     },
     plugins: [
       resolve(),
       commonjs(),
       babel({
-        exclude: 'node_modules/**',
-        runtimeHelpers: true
-      })
-    ]
-  }
+        exclude: "node_modules/**",
+        runtimeHelpers: true,
+      }),
+    ],
+  },
 ];
